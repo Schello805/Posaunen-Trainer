@@ -19,59 +19,52 @@
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg sticky-top bg-body-tertiary shadow-sm">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#" onclick="switchMainView('trainer')">
-                <i class="bi bi-music-note-beamed me-2 text-warning"></i>
-                Posaune Start
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active fw-bold" id="nav-link-trainer" href="#"
-                            onclick="switchMainView('trainer')">Trainer</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-link-instructions" href="#"
-                            onclick="switchMainView('instructions')">Anleitung & Referenz</a></li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <div class="form-check form-switch me-2">
-                        <input class="form-check-input" type="checkbox" id="darkModeSwitch" checked>
-                        <label class="form-check-label" for="darkModeSwitch"><i
-                                class="bi bi-moon-stars-fill"></i></label>
-                    </div>
+    <!-- Compact Header / Stats Bar -->
+    <div class="container-fluid bg-body-tertiary border-bottom py-2 sticky-top shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="fw-bold text-warning"><i class="bi bi-music-note-beamed"></i> Posaune Start</div>
+
+                <!-- Level Badge -->
+                <div class="badge bg-primary rounded-pill p-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i>
+                    <span>Lvl <span id="displayLevel">1</span></span>
                 </div>
+            </div>
+
+            <!-- XP Bar & Streak -->
+            <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+                <div class="d-none d-md-block w-25">
+                    <div class="progress" role="progressbar" style="height: 10px;">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                            id="xpProgressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="text-end text-muted" style="font-size: 0.7rem;">XP bis Level Up</div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1 text-danger fw-bold" title="Tage in Folge">
+                    <i class="bi bi-fire"></i> <span id="displayStreak">0</span>
+                </div>
+
+                <!-- Dark Mode Toggle Mini -->
+                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" id="darkModeToggleBtn"
+                    onclick="toggleDarkMode()">
+                    <i class="bi bi-moon-stars-fill"></i>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container py-4">
+    <div class="container py-3">
         <div id="view-trainer" class="view-section">
-            <div class="text-center">
-                <div class="level-selector">
-                    <span class="me-2 fw-bold">Schwierigkeit:</span>
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="levelRadio" id="level1" autocomplete="off" checked
-                            onchange="setLevel(1)">
-                        <label class="btn btn-outline-success" for="level1">Anfänger (C-Dur)</label>
-                        <input type="radio" class="btn-check" name="levelRadio" id="level2" autocomplete="off"
-                            onchange="setLevel(2)">
-                        <label class="btn btn-outline-warning" for="level2">Fortgeschritten</label>
-                        <input type="radio" class="btn-check" name="levelRadio" id="level3" autocomplete="off"
-                            onchange="setLevel(3)">
-                        <label class="btn btn-outline-danger" for="level3">Profi</label>
-                    </div>
-                </div>
-            </div>
-
-            <ul class="nav nav-pills nav-fill mb-4 gap-2 p-1 bg-body-tertiary rounded-pill" id="pills-tab">
-                <li class="nav-item"><button class="nav-link active rounded-pill" id="pills-quiz-tab"
+            <!-- Tabs -->
+            <ul class="nav nav-pills nav-fill mb-3 gap-2 p-1 bg-body-tertiary rounded-pill shadow-sm" id="pills-tab">
+                <li class="nav-item"><button class="nav-link active rounded-pill py-1" id="pills-quiz-tab"
                         data-bs-toggle="pill" data-bs-target="#pills-quiz"><i class="bi bi-controller"></i>
                         Quiz</button></li>
-                <li class="nav-item"><button class="nav-link rounded-pill" id="pills-learn-tab" data-bs-toggle="pill"
-                        data-bs-target="#pills-learn"><i class="bi bi-book"></i> Erkunden</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill py-1" id="pills-learn-tab"
+                        data-bs-toggle="pill" data-bs-target="#pills-learn"><i class="bi bi-book"></i> Erkunden</button>
+                </li>
             </ul>
 
             <div class="tab-content" id="pills-tabContent">
@@ -79,17 +72,24 @@
                 <div class="tab-pane fade show active" id="pills-quiz">
                     <div class="card shadow border-0">
                         <div class="card-body text-center">
-                            <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
-                                <div class="stat-box"><i class="bi bi-trophy-fill text-warning"></i> <span
-                                        id="score">0</span></div>
-                                <div class="stat-box"><i class="bi bi-fire streak-fire" id="streakIcon"></i> Streak:
-                                    <span id="streakCount">0</span>
-                                </div>
-                                <div class="stat-box"><i class="bi bi-star-fill text-primary"></i> Best: <span
-                                        id="highScore">0</span></div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="mb-0">Finde die Position</h3>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle"
+                                    onclick="switchMainView('instructions')" title="Anleitung">
+                                    <i class="bi bi-question-lg"></i>
+                                </button>
                             </div>
-                            <h3 class="mb-2">Finde die Position</h3>
                             <p class="text-muted mb-1" id="quizLevelHint">Modus: Anfänger</p>
+
+                            <div class="d-flex justify-content-center align-items-center mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="micModeSwitch"
+                                        onchange="toggleMicMode()">
+                                    <label class="form-check-label fw-bold" for="micModeSwitch">
+                                        <i class="bi bi-mic-fill"></i> Mit echter Posaune spielen (Beta)
+                                    </label>
+                                </div>
+                            </div>
 
                             <div class="staff-container" id="quizStaff"></div>
 
@@ -109,38 +109,70 @@
                                 <div id="quizFeedback" class="feedback-badge bg-success text-white"></div>
                             </div>
 
-                            <!-- Slider Wrapper -->
-                            <div class="trombone-visualizer-container mt-2">
-                                <div class="viz-wrapper">
-                                    <input type="range" id="quizSlideRange" min="1" max="7" step="0.05" value="1"
-                                        oninput="handleQuizInput(this.value)" onchange="snapQuizInput(this.value)">
+                            <!-- DUAL VIEW: SLIDER vs TUNER -->
+                            <div id="interface-wrapper" class="mt-2">
 
-                                    <div class="trombone-visualizer">
-                                        <div class="fixed-tubing"></div>
-                                        <div class="inner-slide-track"></div>
-                                        <div class="outer-slide" id="quizVisualSlide">
-                                            <div class="slide-handle">
-                                                <div class="slide-handle-icon"><i class="bi bi-arrow-left-right"></i>
+                                <!-- 1. STANDARD SLIDER VIEW -->
+                                <div id="slider-interface" class="trombone-visualizer-container">
+                                    <div class="viz-wrapper">
+                                        <input type="range" id="quizSlideRange" min="1" max="7" step="0.05" value="1"
+                                            oninput="handleQuizInput(this.value)" onchange="snapQuizInput(this.value)">
+
+                                        <div class="trombone-visualizer">
+                                            <div class="fixed-tubing"></div>
+                                            <div class="inner-slide-track"></div>
+                                            <div class="outer-slide" id="quizVisualSlide">
+                                                <div class="slide-handle">
+                                                    <div class="slide-handle-icon"><i
+                                                            class="bi bi-arrow-left-right"></i>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <!-- Marker -->
+                                            <div class="pos-marker" id="quiz-marker-1" onclick="snapQuizInput(1)"
+                                                style="left: calc(95px + 0px);"><span>1</span></div>
+                                            <div class="pos-marker" id="quiz-marker-2" onclick="snapQuizInput(2)"
+                                                style="left: calc(95px + 40px);"><span>2</span></div>
+                                            <div class="pos-marker" id="quiz-marker-3" onclick="snapQuizInput(3)"
+                                                style="left: calc(95px + 80px);"><span>3</span></div>
+                                            <div class="pos-marker" id="quiz-marker-4" onclick="snapQuizInput(4)"
+                                                style="left: calc(95px + 120px);"><span>4</span></div>
+                                            <div class="pos-marker" id="quiz-marker-5" onclick="snapQuizInput(5)"
+                                                style="left: calc(95px + 160px);"><span>5</span></div>
+                                            <div class="pos-marker" id="quiz-marker-6" onclick="snapQuizInput(6)"
+                                                style="left: calc(95px + 200px);"><span>6</span></div>
+                                            <div class="pos-marker" id="quiz-marker-7" onclick="snapQuizInput(7)"
+                                                style="left: calc(95px + 240px);"><span>7</span></div>
                                         </div>
-                                        <!-- Marker -->
-                                        <div class="pos-marker" id="quiz-marker-1" onclick="snapQuizInput(1)"
-                                            style="left: calc(95px + 0px);"><span>1</span></div>
-                                        <div class="pos-marker" id="quiz-marker-2" onclick="snapQuizInput(2)"
-                                            style="left: calc(95px + 40px);"><span>2</span></div>
-                                        <div class="pos-marker" id="quiz-marker-3" onclick="snapQuizInput(3)"
-                                            style="left: calc(95px + 80px);"><span>3</span></div>
-                                        <div class="pos-marker" id="quiz-marker-4" onclick="snapQuizInput(4)"
-                                            style="left: calc(95px + 120px);"><span>4</span></div>
-                                        <div class="pos-marker" id="quiz-marker-5" onclick="snapQuizInput(5)"
-                                            style="left: calc(95px + 160px);"><span>5</span></div>
-                                        <div class="pos-marker" id="quiz-marker-6" onclick="snapQuizInput(6)"
-                                            style="left: calc(95px + 200px);"><span>6</span></div>
-                                        <div class="pos-marker" id="quiz-marker-7" onclick="snapQuizInput(7)"
-                                            style="left: calc(95px + 240px);"><span>7</span></div>
                                     </div>
                                 </div>
+
+                                <!-- 2. TUNER INTERFACE (Hidden by default) -->
+                                <div id="tuner-interface" class="d-none text-center py-3">
+                                    <div class="tuner-display mb-3">
+                                        <div class="note-display display-1 fw-bold" id="detectedNote">--</div>
+                                        <div class="freq-display text-muted small" id="detectedFreq">0 Hz</div>
+                                    </div>
+
+                                    <div class="tuner-gauge-wrapper">
+                                        <div class="tuner-gauge">
+                                            <div class="gauge-center-line"></div>
+                                            <div class="gauge-needle" id="tunerNeedle"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between px-2 text-muted small mt-1">
+                                            <span>b (Zu tief)</span>
+                                            <span class="text-success fw-bold">Perfekt</span>
+                                            <span># (Zu hoch)</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <div class="alert alert-info py-2 small d-inline-block">
+                                            <i class="bi bi-info-circle"></i> Spiele den Ton lang und gleichmäßig.
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
 
                             <!-- BUTTONS -->
@@ -176,13 +208,16 @@
                             <div id="learnNoteInteraction"
                                 class="my-3 d-flex justify-content-center flex-wrap gap-2 align-items-center"
                                 style="min-height: 50px;">
-                                <div class="text-muted fst-italic small">Bewege den Zug, um Töne zu sehen</div>
+                                <div class="text-muted fst-italic small d-none d-md-block">Bewege den Zug, um Töne zu
+                                    sehen</div>
+                                <div class="text-muted fst-italic small d-md-none">Tippe unten auf eine Zahl (1-7), um
+                                    Töne zu sehen</div>
                             </div>
 
                             <div class="d-flex justify-content-center gap-3 mb-3 align-items-center">
-                                <div class="form-check form-switch">
+                                <div class="form-check form-switch small">
                                     <input class="form-check-input" type="checkbox" id="autoPlayCheck" checked>
-                                    <label class="form-check-label small text-muted" for="autoPlayCheck">Auto-Play
+                                    <label class="form-check-label text-muted" for="autoPlayCheck">Auto-Play
                                         (Grundton)</label>
                                 </div>
                             </div>
@@ -244,8 +279,12 @@
         <div id="view-instructions" class="view-section d-none">
             <div class="row justify-content-center">
                 <div class="col-lg-10 col-xl-8">
-                    <h2 class="text-center mb-4"><i class="bi bi-info-circle-fill text-warning"></i> Anleitung & Hilfe
-                    </h2>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0"><i class="bi bi-info-circle-fill text-warning"></i> Anleitung & Hilfe</h2>
+                        <button class="btn btn-outline-primary rounded-pill" onclick="switchMainView('trainer')">
+                            <i class="bi bi-arrow-left"></i> Zurück
+                        </button>
+                    </div>
 
                     <div class="card shadow border-0 mb-4">
                         <div class="card-body">
