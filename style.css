@@ -572,6 +572,41 @@ input[type=range]:active+.trombone-visualizer .outer-slide .slide-handle-icon {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
+/* --- FLASHCARD STYLES --- */
+.flashcard-container {
+    perspective: 1000px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flashcard {
+    width: 100%;
+    max-width: 600px;
+    min-height: 280px;
+    background: var(--bs-body-bg);
+    border: 2px solid var(--bs-border-color);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.flashcard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.flashcard-inner {
+    position: relative;
+}
+
+.flashcard-front,
+.flashcard-back {
+    transition: opacity 0.3s ease;
+}
+
 /* --- MOBILE OPTIMIZATIONS --- */
 @media (max-width: 576px) {
     .container-fluid.sticky-top {

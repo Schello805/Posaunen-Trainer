@@ -30,10 +30,12 @@
     <div class="container-fluid bg-body-tertiary border-bottom py-2 sticky-top shadow-sm">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-                <div class="fw-bold text-warning d-flex align-items-center gap-2">
-                    <img src="posaune.png" alt="Logo" height="32" class="d-inline-block align-text-top">
-                    Posaune Start
-                </div>
+                <a href="javascript:void(0)" onclick="switchMainView('trainer')" class="text-decoration-none">
+                    <div class="fw-bold text-warning d-flex align-items-center gap-2">
+                        <img src="posaune.png" alt="Logo" height="32" class="d-inline-block align-text-top">
+                        Posaune Start
+                    </div>
+                </a>
 
                 <!-- Level Badge -->
                 <div class="badge bg-primary rounded-pill p-2 d-flex align-items-center gap-2">
@@ -52,8 +54,11 @@
                     <div class="text-end text-muted" style="font-size: 0.7rem;">XP bis Level Up</div>
                 </div>
 
-                <div class="d-flex align-items-center gap-1 text-danger fw-bold" title="Tage in Folge">
-                    <i class="bi bi-fire"></i> <span id="displayStreak">0</span>
+                <div class="text-center">
+                    <div class="d-flex align-items-center gap-1 text-danger fw-bold">
+                        <i class="bi bi-fire"></i> <span id="displayStreak">0</span>
+                    </div>
+                    <div class="text-muted" style="font-size: 0.65rem;">Tage in Folge</div>
                 </div>
 
                 <!-- Dark Mode Toggle Mini -->
@@ -75,6 +80,10 @@
                 <li class="nav-item"><button class="nav-link rounded-pill py-1" id="pills-learn-tab"
                         data-bs-toggle="pill" data-bs-target="#pills-learn"><i class="bi bi-book"></i> Erkunden</button>
                 </li>
+                <li class="nav-item"><button class="nav-link rounded-pill py-1" id="pills-theory-tab"
+                        data-bs-toggle="pill" data-bs-target="#pills-theory"><i class="bi bi-lightbulb"></i>
+                        Theorie</button>
+                </li>
             </ul>
 
             <div class="tab-content" id="pills-tabContent">
@@ -91,6 +100,30 @@
                             </div>
                             <p class="text-muted mb-1" id="quizLevelHint">Modus: Anfänger</p>
 
+                            <!-- Schwierigkeits-Selector -->
+                            <div class="mb-3">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diffAuto"
+                                        checked autocomplete="off" onchange="setDifficultyOverride(0)">
+                                    <label class="btn btn-outline-primary" for="diffAuto">Auto (Lvl <span
+                                            id="autoLevelDisplay">1</span>)</label>
+
+                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff1"
+                                        autocomplete="off" onchange="setDifficultyOverride(1)">
+                                    <label class="btn btn-outline-success" for="diff1">Anfänger</label>
+
+                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff2"
+                                        autocomplete="off" onchange="setDifficultyOverride(2)">
+                                    <label class="btn btn-outline-warning" for="diff2">Fortgeschritten</label>
+
+                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff3"
+                                        autocomplete="off" onchange="setDifficultyOverride(3)">
+                                    <label class="btn btn-outline-danger" for="diff3">Profi</label>
+                                </div>
+                                <div class="text-muted small fst-italic mt-1">Wähle die Schwierigkeit oder nutze "Auto"
+                                    für automatischen Fortschritt</div>
+                            </div>
+
                             <div class="d-flex justify-content-center align-items-center mb-3">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="micModeSwitch"
@@ -99,6 +132,8 @@
                                         <i class="bi bi-mic-fill"></i> Mit echter Posaune spielen (Beta)
                                     </label>
                                 </div>
+                                <div class="text-muted small fst-italic">Aktiviere dein Mikrofon, um echte Töne zu
+                                    erkennen</div>
                             </div>
 
                             <div class="staff-container" id="quizStaff"></div>
@@ -283,105 +318,205 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="view-instructions" class="view-section d-none">
-            <div class="row justify-content-center">
-                <div class="col-lg-10 col-xl-8">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-info-circle-fill text-warning"></i> Anleitung & Hilfe</h2>
-                        <button class="btn btn-outline-primary rounded-pill" onclick="switchMainView('trainer')">
-                            <i class="bi bi-arrow-left"></i> Zurück
-                        </button>
-                    </div>
+                <!-- THEORIE -->
+                <div class="tab-pane fade" id="pills-theory">
+                    <div class="card shadow border-0">
+                        <div class="card-body text-center">
+                            <h2 class="card-title mb-3"><i class="bi bi-lightbulb-fill text-warning"></i>
+                                Posaunen-Wissen</h2>
+                            <p class="text-muted small">Lerne die Grundlagen der Posaune kennen</p>
 
-                    <div class="card shadow border-0 mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-music-note-beamed"></i> Willkommen beim Posaune Start
-                                Trainer!</h5>
-                            <p class="card-text">
-                                Diese WebApp hilft dir, die ersten Töne auf der Posaune zu lernen und die richtigen
-                                Zugpositionen zu verinnerlichen.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="card shadow border-0 mb-4">
-                        <div class="card-header bg-body-secondary">
-                            <h5 class="mb-0">Die zwei Modi</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-4">
-                                <div class="col-sm-6">
-                                    <div class="p-3 border rounded h-100">
-                                        <h6 class="text-success"><i class="bi bi-controller"></i> Quiz (Üben)</h6>
-                                        <p class="small">Dein Trainingsplatz. Note erkennen, Zug ziehen, prüfen.</p>
-                                        <ol class="small">
-                                            <li>Note im oberen Kasten lesen.</li>
-                                            <li>Zug auf die richtige Position schieben (oder Button klicken).</li>
-                                            <li>"Antwort prüfen" klicken.</li>
-                                        </ol>
+                            <!-- Flashcard Container -->
+                            <div class="flashcard-container my-4">
+                                <div class="flashcard" id="theoryCard">
+                                    <div class="card-number mb-2 text-muted small">Frage <span
+                                            id="theoryCardNum">1</span> von <span id="theoryCardTotal">-</span>
                                     </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="p-3 border rounded h-100">
-                                        <h6 class="text-primary"><i class="bi bi-book"></i> Erkunden</h6>
-                                        <p class="small">Hier kannst du experimentieren.</p>
-                                        <ul class="small">
-                                            <li>Bewege den Zug, um zu sehen, welche Töne auf der Position liegen.</li>
-                                            <li>Klicke auf die <strong>Buttons (F, B...)</strong>, um die einzelnen Töne
-                                                zu hören.</li>
-                                            <li>Das "Auto-Play" spielt automatisch den Grundton.</li>
-                                        </ul>
+                                    <h4 class="mb-4" id="theoryQuestion">Lade Fragen...</h4>
+
+                                    <!-- Options Container -->
+                                    <div id="theoryOptions" class="d-grid gap-2">
+                                        <!-- Buttons werden per JS eingefügt -->
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="card shadow border-0 mb-4">
-                        <div class="card-header bg-body-secondary">
-                            <h5 class="mb-0">Steuerung</h5>
-                            ```
-                            <li><strong>PC / Tablet:</strong> Ziehe den Slider am Griff oder klicke direkt auf die
-                                Zahlen im Bild.</li>
-                            <li><strong>Smartphone:</strong> Nutze die großen runden Buttons (1-7) unter der Grafik.
-                            </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Zugtabelle -->
-                    <div class="card shadow border-0 mb-4">
-                        <div class="card-header bg-warning text-dark fw-bold">
-                            <i class="bi bi-grid-3x3"></i> Zugtabelle & Positionen
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover mb-0 align-middle text-center table-ref"
-                                    id="referenceTable">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th style="width: 10%">Pos</th>
-                                            <th style="width: 30%">Anfänger (B-Dur)</th>
-                                            <th style="width: 30%">Fortgeschritten</th>
-                                            <th style="width: 30%">Profi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Wird per JS gefüllt -->
-                                    </tbody>
-                                </table>
+                            <!-- Progress -->
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar bg-info" id="theoryProgress" style="width: 0%"></div>
                             </div>
+                            <div class="text-muted small">
+                                <span id="theoryCorrect">0</span> richtig |
+                                <span id="theoryWrong">0</span> falsch
+                            </div>
+
+                            <!-- Reset Button -->
+                            <button class="btn btn-sm btn-outline-secondary mt-3" onclick="resetTheoryQuiz()">
+                                <i class="bi bi-arrow-clockwise"></i> Quiz neu starten
+                            </button>
                         </div>
                     </div>
-
-                    <div class="text-center"><button class="btn btn-primary btn-lg"
-                            onclick="switchMainView('trainer')">Zurück zum Trainer</button></div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="view-instructions" class="view-section d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0"><i class="bi bi-info-circle-fill text-warning"></i> Anleitung & Hilfe</h2>
+                    <button class="btn btn-outline-primary rounded-pill" onclick="switchMainView('trainer')">
+                        <i class="bi bi-arrow-left"></i> Zurück
+                    </button>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-music-note-beamed"></i> Willkommen beim Posaune Start
+                            Trainer!</h5>
+                        <p class="card-text">
+                            Diese WebApp hilft dir, die ersten Töne auf der Posaune zu lernen und die richtigen
+                            Zugpositionen zu verinnerlichen.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-body-secondary">
+                        <h5 class="mb-0">Die drei Bereiche</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Quiz -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-success"><i class="bi bi-controller"></i> Quiz (Praxis)</h6>
+                                    <p class="small">Trainiere das Treffen der richtigen Zugpositionen.</p>
+                                    <ul class="small ps-3">
+                                        <li><strong>Schwierigkeit:</strong> Wähle manuell (Anfänger/Profi) oder lass
+                                            "Auto" mit deinem Level wachsen.</li>
+                                        <li><strong>Mikrofon (Beta):</strong> Spiele echte Töne auf deiner Posaune, um
+                                            zu antworten!</li>
+                                        <li><strong>Hilfe:</strong> Klicke auf "Ton anhören", wenn du unsicher bist.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Erkunden -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-primary"><i class="bi bi-book"></i> Erkunden</h6>
+                                    <p class="small">Experimentiere ohne Druck.</p>
+                                    <ul class="small ps-3">
+                                        <li>Bewege den Zug und sieh, welche Töne dort liegen.</li>
+                                        <li>Höre dir die Töne an.</li>
+                                        <li>Nutze <strong>Auto-Play</strong>, um den Grundton beim Ziehen zu hören.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Theorie -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-warning"><i class="bi bi-lightbulb"></i> Theorie</h6>
+                                    <p class="small">Teste dein Wissen über die Posaune.</p>
+                                    <ul class="small ps-3">
+                                        <li>Multiple-Choice Fragen zu Aufbau, Geschichte und Musiktheorie.</li>
+                                        <li>4 Schwierigkeitsstufen (Leicht bis Experte).</li>
+                                        <li>Sammle extra XP für richtige Antworten!</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-body-secondary">
+                        <h5 class="mb-0">Steuerung</h5>
+                        <li><strong>PC / Tablet:</strong> Ziehe den Slider am Griff oder klicke direkt auf die
+                            Zahlen im Bild.</li>
+                        <li><strong>Smartphone:</strong> Nutze die großen runden Buttons (1-7) unter der Grafik.
+                        </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Zugtabelle -->
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-warning text-dark fw-bold">
+                        <i class="bi bi-grid-3x3"></i> Zugtabelle & Positionen
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0 align-middle text-center table-ref"
+                                id="referenceTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 10%">Pos</th>
+                                        <th style="width: 30%">Anfänger (B-Dur)</th>
+                                        <th style="width: 30%">Fortgeschritten</th>
+                                        <th style="width: 30%">Profi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Wird per JS gefüllt -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiken -->
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-info text-white fw-bold">
+                        <i class="bi bi-graph-up"></i> Deine Statistiken
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Heute</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Richtig beantwortet:</span>
+                                    <span class="badge bg-success" id="statTodayCorrect">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span>Gesamt heute:</span>
+                                    <span class="badge bg-secondary" id="statTodayTotal">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Insgesamt</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Richtig:</span>
+                                    <span class="badge bg-success" id="statTotalCorrect">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span>Fragen:</span>
+                                    <span class="badge bg-secondary" id="statTotalQuestions">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">Genauigkeit: <span id="statAccuracy"
+                                            class="fw-bold">0%</span></small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6 class="text-muted small mb-2">Genauigkeit pro Position</h6>
+                        <div id="positionStatsContainer" class="small">
+                            <!-- Wird per JS gefüllt -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center"><button class="btn btn-primary btn-lg"
+                        onclick="switchMainView('trainer')">Zurück zum Trainer</button></div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <!-- Footer -->

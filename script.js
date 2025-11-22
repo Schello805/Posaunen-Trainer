@@ -7,7 +7,21 @@ let userProgress = {
     xpToNext: 100,
     streak: 0,
     lastLogin: null,
-    highScore: 0
+    highScore: 0,
+    // Neue Statistiken
+    todayCorrect: 0,
+    todayTotal: 0,
+    totalCorrect: 0,
+    totalQuestions: 0,
+    positionStats: { // Genauigkeit pro Position
+        1: { correct: 0, total: 0 },
+        2: { correct: 0, total: 0 },
+        3: { correct: 0, total: 0 },
+        4: { correct: 0, total: 0 },
+        5: { correct: 0, total: 0 },
+        6: { correct: 0, total: 0 },
+        7: { correct: 0, total: 0 }
+    }
 };
 
 let currentQuizQuestion = null;
@@ -15,6 +29,174 @@ let quizActive = true;
 let currentSliderSelection = 1;
 let lastLearnRenderedNote = null;
 let currentLearnPosInt = 1;
+let streak = 0; // Session streak (richtige Antworten in Folge)
+let difficultyOverride = 0; // 0 = Auto, 1-3 = Manuell
+
+// --- THEORIE QUIZ ---
+// Schwierigkeit: 1=Leicht, 2=Mittel, 3=Schwer, 4=Experte
+const theoryQuestionsPool = [
+    // LEICHT (Basics)
+    { q: "Wie viele Zugpositionen hat eine Posaune?", options: ["7", "5", "3"], correct: 0, level: 1 },
+    { q: "Was ist der tiefste Ton in der 1. Position (ohne Quartventil)?", options: ["B (Bb)", "F", "C"], correct: 0, level: 1 },
+    { q: "In welchem Schlüssel liest man Posaune meistens?", options: ["Bassschlüssel", "Violinschlüssel", "Altschlüssel"], correct: 0, level: 1 },
+    { q: "Aus welchem Material besteht eine Posaune meistens?", options: ["Messing", "Holz", "Silber"], correct: 0, level: 1 },
+    { q: "Wie verändert sich der Ton, wenn man den Zug rauszieht?", options: ["Er wird tiefer", "Er wird höher", "Er bleibt gleich"], correct: 0, level: 1 },
+    { q: "Welches Teil vibriert, um den Ton zu erzeugen?", options: ["Die Lippen", "Der Zug", "Der Schallbecher"], correct: 0, level: 1 },
+    { q: "Was macht die Wasserklappe?", options: ["Kondenswasser ablassen", "Luft reinlassen", "Den Ton verändern"], correct: 0, level: 1 },
+    { q: "Wie nennt man das Mundstück der Posaune?", options: ["Kesselmundstück", "Schnabel", "Rohrblatt"], correct: 0, level: 1 },
+    { q: "Welche Hand bewegt den Zug?", options: ["Die Rechte", "Die Linke", "Beide"], correct: 0, level: 1 },
+    { q: "Wo ist die 1. Position?", options: ["Zug ganz drin", "Zug ganz draußen", "In der Mitte"], correct: 0, level: 1 },
+
+    // MITTEL (Positionen & Noten)
+    { q: "Welcher Ton liegt auf der 1. Position (neben dem tiefen B)?", options: ["F", "G", "A"], correct: 0, level: 2 },
+    { q: "Auf welcher Position liegt das kleine c?", options: ["3. Position", "1. Position", "6. Position"], correct: 0, level: 2 },
+    { q: "Wie weit sind die Positionen ca. voneinander entfernt?", options: ["ca. 8 cm", "ca. 20 cm", "ca. 2 cm"], correct: 0, level: 2 },
+    { q: "Welcher Ton ist in der 6. Position?", options: ["C", "B", "F"], correct: 0, level: 2 },
+    { q: "Was ist ein 'Naturton'?", options: ["Ton ohne Zugbewegung", "Ein Ton aus Holz", "Ein falscher Ton"], correct: 0, level: 2 },
+    { q: "Wie nennt man das gleitende Verbinden von Tönen?", options: ["Glissando", "Staccato", "Legato"], correct: 0, level: 2 },
+    { q: "Was bedeutet 'f' (forte) in der Musik?", options: ["Laut", "Falsch", "Fein"], correct: 0, level: 2 },
+    { q: "Was bedeutet 'p' (piano) in der Musik?", options: ["Leise", "Posaune", "Pause"], correct: 0, level: 2 },
+    { q: "Welches Intervall ist zwischen 1. und 2. Position?", options: ["Ein Halbton", "Ein Ganzton", "Eine Terz"], correct: 0, level: 2 },
+    { q: "Auf welcher Position liegt das kleine g?", options: ["4. Position", "2. Position", "1. Position"], correct: 0, level: 2 },
+
+    // SCHWER (Theorie & Technik)
+    { q: "Was bewirkt das Quartventil?", options: ["Erweitert Tonumfang nach unten", "Macht Töne höher", "Dämpft den Ton"], correct: 0, level: 3 },
+    { q: "Welches Intervall umfasst der gesamte Zug (Pos 1-7)?", options: ["Verminderte Quinte (Tritonus)", "Quarte", "Oktave"], correct: 0, level: 3 },
+    { q: "Was ist ein 'Hilfsgriff'?", options: ["Alternative Zugposition", "Ein Griff zum Festhalten", "Ein falscher Ton"], correct: 0, level: 3 },
+    { q: "Wo liegt das eingestrichene d' alternativ zur 1. Position?", options: ["4. Position", "3. Position", "6. Position"], correct: 0, level: 3 },
+    { q: "Was ist der 'Ansatz'?", options: ["Lippenspannung & Mundstellung", "Das Ansetzen des Zuges", "Der Anfang eines Stücks"], correct: 0, level: 3 },
+    { q: "In welcher Stimmung ist eine Standard-Posaune?", options: ["B (Bb)", "C", "Es"], correct: 0, level: 3 },
+    { q: "Was ist eine 'Alt-Posaune'?", options: ["Eine kleinere, höhere Posaune", "Eine tiefere Posaune", "Eine alte Posaune"], correct: 0, level: 3 },
+    { q: "Welcher Schlüssel wird für sehr hohe Posaunenstimmen genutzt?", options: ["Tenorschlüssel", "Violinschlüssel", "Bassschlüssel"], correct: 0, level: 3 },
+    { q: "Was ist ein Dämpfer (Mute)?", options: ["Gerät zur Klangveränderung", "Ein leiser Spieler", "Ein Ventil"], correct: 0, level: 3 },
+    { q: "Wie nennt man Singen und Spielen gleichzeitig?", options: ["Multiphonics", "Zirkularatmung", "Dämpfer"], correct: 0, level: 3 },
+
+    // EXPERTE (Details & Geschichte)
+    { q: "Wie hieß der Vorläufer der Posaune?", options: ["Sackbut", "Trompete", "Tuba"], correct: 0, level: 4 },
+    { q: "Was ist die 'Schnecke' am Stimmzug?", options: ["Eine Windung (Platzersparnis)", "Ein Tier", "Ein Fehler"], correct: 0, level: 4 },
+    { q: "Welcher Ton ist der 7. Naturton (oft zu tief)?", options: ["as' (auf B-Posaune)", "f'", "b'"], correct: 0, level: 4 },
+    { q: "Was ist 'Zirkularatmung'?", options: ["Atmen ohne Tonunterbrechung", "Schnell atmen", "Durch die Nase spielen"], correct: 0, level: 4 },
+    { q: "Wie lang ist das Rohr einer B-Posaune insgesamt (ca.)?", options: ["270 cm", "150 cm", "400 cm"], correct: 0, level: 4 },
+    { q: "Was unterscheidet die Bassposaune von der Tenorposaune?", options: ["Größere Bohrung", "Längerer Zug", "Anderes Material"], correct: 0, level: 4 },
+    { q: "Welches Material macht den Klang 'wärmer'?", options: ["Goldmessing", "Gelbmessing", "Neusilber"], correct: 0, level: 4 },
+    { q: "Was ist ein 'Trigger'?", options: ["Hebel für das Ventil", "Der Abzug", "Ein schneller Ton"], correct: 0, level: 4 },
+    { q: "In welchem Jahrhundert entstand die Posaune etwa?", options: ["15. Jahrhundert", "18. Jahrhundert", "12. Jahrhundert"], correct: 0, level: 4 },
+    { q: "Was ist der 'Pedalton' der B-Posaune physikalisch?", options: ["Das Kontra-B", "Das große B", "Das tiefe F"], correct: 0, level: 4 }
+];
+
+let activeTheoryQuestions = [];
+let currentTheoryIndex = 0;
+let theoryCorrectCount = 0;
+let theoryWrongCount = 0;
+
+// --- THEORIE QUIZ FUNCTIONS ---
+function initTheoryQuiz() {
+    // Mische alle Fragen und wähle 15 zufällige aus
+    // Oder wir nehmen alle, aber gemischt. User wollte "random geladen".
+    // Nehmen wir 20 Fragen pro Runde für eine gute Länge.
+    const shuffled = [...theoryQuestionsPool].sort(() => 0.5 - Math.random());
+    activeTheoryQuestions = shuffled.slice(0, 20);
+
+    currentTheoryIndex = 0;
+    theoryCorrectCount = 0;
+    theoryWrongCount = 0;
+
+    loadTheoryCard();
+}
+
+function loadTheoryCard() {
+    if (currentTheoryIndex >= activeTheoryQuestions.length) {
+        // Quiz beendet
+        const percent = Math.round((theoryCorrectCount / activeTheoryQuestions.length) * 100);
+        let msg = "Gut gemacht!";
+        if (percent >= 90) msg = "Exzellent! Ein echter Profi!";
+        else if (percent >= 70) msg = "Sehr gut!";
+        else if (percent < 50) msg = "Übung macht den Meister.";
+
+        document.getElementById('theoryQuestion').innerHTML = `
+            <i class="bi bi-trophy-fill text-warning display-1"></i><br>
+            <h3 class="mt-3">Quiz beendet!</h3>
+            <p class="lead">${msg}</p>
+            <div class="alert alert-secondary d-inline-block">
+                ${theoryCorrectCount} von ${activeTheoryQuestions.length} richtig (${percent}%)
+            </div>
+        `;
+        document.getElementById('theoryOptions').innerHTML = `
+            <button class="btn btn-primary btn-lg mt-3" onclick="initTheoryQuiz()">
+                <i class="bi bi-arrow-clockwise"></i> Neues Quiz starten
+            </button>
+        `;
+        document.getElementById('theoryCardNum').textContent = "-";
+        return;
+    }
+
+    const card = activeTheoryQuestions[currentTheoryIndex];
+    document.getElementById('theoryQuestion').textContent = card.q;
+    document.getElementById('theoryCardNum').textContent = currentTheoryIndex + 1;
+    document.getElementById('theoryCardTotal').textContent = activeTheoryQuestions.length;
+
+    // Optionen rendern
+    const optionsContainer = document.getElementById('theoryOptions');
+    optionsContainer.innerHTML = '';
+
+    // Erstelle Array mit Indizes [0, 1, 2] und mische sie für die Anzeige
+    let indices = [0, 1, 2];
+    indices.sort(() => 0.5 - Math.random());
+
+    indices.forEach(idx => {
+        const btn = document.createElement('button');
+        btn.className = "btn btn-outline-dark text-start p-3 mb-2 w-100 fw-bold theory-opt-btn";
+        btn.innerHTML = `<i class="bi bi-circle me-2"></i> ${card.options[idx]}`;
+        btn.onclick = () => checkTheoryAnswer(idx, btn, card.correct);
+        optionsContainer.appendChild(btn);
+    });
+
+    // Update progress
+    const progress = (currentTheoryIndex / activeTheoryQuestions.length) * 100;
+    document.getElementById('theoryProgress').style.width = progress + '%';
+    document.getElementById('theoryCorrect').textContent = theoryCorrectCount;
+    document.getElementById('theoryWrong').textContent = theoryWrongCount;
+}
+
+function checkTheoryAnswer(selectedIdx, btnElement, correctIdx) {
+    // Disable all buttons
+    const allBtns = document.querySelectorAll('.theory-opt-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    if (selectedIdx === correctIdx) {
+        // Richtig
+        btnElement.classList.remove('btn-outline-dark');
+        btnElement.classList.add('btn-success');
+        btnElement.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> ${btnElement.innerText}`;
+        theoryCorrectCount++;
+        addXP(5);
+        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+    } else {
+        // Falsch
+        btnElement.classList.remove('btn-outline-dark');
+        btnElement.classList.add('btn-danger');
+        btnElement.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i> ${btnElement.innerText}`;
+        theoryWrongCount++;
+
+        // Zeige richtige Antwort
+        allBtns.forEach(b => {
+            if (b.innerText.includes(activeTheoryQuestions[currentTheoryIndex].options[correctIdx])) {
+                b.classList.remove('btn-outline-dark');
+                b.classList.add('btn-success');
+            }
+        });
+    }
+
+    // Nächste Frage nach kurzer Verzögerung
+    setTimeout(() => {
+        currentTheoryIndex++;
+        loadTheoryCard();
+    }, 1500);
+}
+
+function resetTheoryQuiz() {
+    initTheoryQuiz();
+}
 
 // --- DATENBASIS (B-Dur Anfänger) ---
 const positionMap = {
@@ -65,6 +247,23 @@ function initGamification() {
     const saved = localStorage.getItem('posauneProgress');
     if (saved) {
         userProgress = JSON.parse(saved);
+
+        // Migration: Fehlende Felder hinzufügen
+        if (!userProgress.todayCorrect) userProgress.todayCorrect = 0;
+        if (!userProgress.todayTotal) userProgress.todayTotal = 0;
+        if (!userProgress.totalCorrect) userProgress.totalCorrect = 0;
+        if (!userProgress.totalQuestions) userProgress.totalQuestions = 0;
+        if (!userProgress.positionStats) {
+            userProgress.positionStats = {
+                1: { correct: 0, total: 0 },
+                2: { correct: 0, total: 0 },
+                3: { correct: 0, total: 0 },
+                4: { correct: 0, total: 0 },
+                5: { correct: 0, total: 0 },
+                6: { correct: 0, total: 0 },
+                7: { correct: 0, total: 0 }
+            };
+        }
     } else {
         // Migration old highscore
         const oldHigh = localStorage.getItem('posauneHighScore');
@@ -89,11 +288,14 @@ function checkDailyStreak() {
         if (userProgress.lastLogin === yesterday.toDateString()) {
             userProgress.streak++;
         } else if (userProgress.lastLogin !== today) {
-            // Streak broken (but keep 1 for today)
-            // Only reset if it wasn't just first login
             if (userProgress.lastLogin) userProgress.streak = 1;
             else userProgress.streak = 1;
         }
+
+        // Reset daily stats
+        userProgress.todayCorrect = 0;
+        userProgress.todayTotal = 0;
+
         userProgress.lastLogin = today;
         saveProgress();
     }
@@ -149,12 +351,23 @@ function getNotesForPosition(p, lvl) {
     return positionMap[p];
 }
 
+function setDifficultyOverride(level) {
+    difficultyOverride = level;
+    document.getElementById('autoLevelDisplay').textContent = userProgress.level;
+    nextQuestion(); // Neue Frage mit neuer Schwierigkeit
+}
+
+function getEffectiveLevel() {
+    return difficultyOverride === 0 ? userProgress.level : difficultyOverride;
+}
+
 function generateQuestionsForLevel(lvl) {
+    const effectiveLevel = getEffectiveLevel();
     let q = [];
-    const allowedPos = getAllowedPositions(lvl);
+    const allowedPos = getAllowedPositions(effectiveLevel);
 
     allowedPos.forEach(pos => {
-        const notes = getNotesForPosition(pos, lvl);
+        const notes = getNotesForPosition(pos, effectiveLevel);
         notes.forEach(n => {
             q.push({
                 noteName: n.text,
@@ -448,33 +661,47 @@ function checkQuizAnswer() {
     const fb = document.getElementById('quizFeedback');
     const staff = document.getElementById('quizStaff');
 
+    // Update statistics
+    userProgress.todayTotal++;
+    userProgress.totalQuestions++;
+    userProgress.positionStats[currentQuizQuestion.correct].total++;
+
     if (userPos === currentQuizQuestion.correct) {
         // Correct
-        addXP(10 + (userProgress.streak > 0 ? 5 : 0)); // Bonus for daily streak? Or session streak?
-        // Let's use session streak for XP bonus
-        streak++; // Session streak
+        userProgress.todayCorrect++;
+        userProgress.totalCorrect++;
+        userProgress.positionStats[currentQuizQuestion.correct].correct++;
+
+        addXP(10 + (userProgress.streak > 0 ? 5 : 0));
+        streak++;
 
         fb.className = "feedback-badge bg-success text-white";
-        fb.innerHTML = `<strong>Richtig!</strong> <i class="bi bi-music-note-beamed"></i> (+10 XP)`;
+        fb.innerHTML = `<strong>Richtig!</strong> <i class="bi bi-music-note-beamed"></i> (+10 XP) | Heute: ${userProgress.todayCorrect}/${userProgress.todayTotal}`;
         staff.classList.add('correct');
         playBrassTone(currentQuizQuestion.freq);
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+
+        // Vibration bei Erfolg (Mobile)
+        if ('vibrate' in navigator) {
+            navigator.vibrate(200);
+        }
     } else {
         streak = 0;
         fb.className = "feedback-badge bg-danger text-white";
         fb.innerHTML = `<strong>Falsch.</strong> Die richtige Position ist <strong>${currentQuizQuestion.correct}</strong>`;
         staff.classList.add('wrong');
-        playBrassTone(80); // Error sound
+        playBrassTone(80);
 
-        // VISUAL FEEDBACK: Move slide to correct position automatically
+        // Move slide to correct position automatically
         setTimeout(() => {
             snapQuizInput(currentQuizQuestion.correct);
-            playBrassTone(currentQuizQuestion.freq); // Play correct tone after moving
+            playBrassTone(currentQuizQuestion.freq);
         }, 800);
     }
 
     // Update UI
     updateUIStats();
+    saveProgress();
 
     fb.style.display = 'block';
     document.getElementById('checkAnswerBtn').style.display = 'none';
@@ -493,9 +720,12 @@ function switchMainView(v) {
     } else {
         t.classList.add('d-none');
         i.classList.remove('d-none');
-        // Generate table when switching to instructions
+        // Generate table and stats when switching to instructions
         if (typeof generateReferenceTable === 'function') {
             generateReferenceTable();
+        }
+        if (typeof generateStats === 'function') {
+            generateStats();
         }
     }
 
@@ -549,7 +779,20 @@ async function startMicrophone() {
         updatePitch();
     } catch (e) {
         console.error("Mic Error:", e);
-        alert("Mikrofon-Zugriff verweigert oder nicht möglich.");
+
+        let errorMsg = "Mikrofon-Zugriff nicht möglich.";
+
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            errorMsg = "⚠️ Mikrofon-Zugriff verweigert.\n\nBitte erlaube den Zugriff in deinen Browser-Einstellungen.";
+        } else if (e.name === 'NotFoundError') {
+            errorMsg = "⚠️ Kein Mikrofon gefunden.\n\nBitte schließe ein Mikrofon an.";
+        } else if (e.name === 'NotSupportedError') {
+            errorMsg = "⚠️ Dein Browser unterstützt diese Funktion nicht.\n\nVerwende Chrome, Firefox oder Safari.";
+        } else if (e.name === 'NotReadableError') {
+            errorMsg = "⚠️ Mikrofon wird bereits verwendet.\n\nSchließe andere Apps, die das Mikrofon nutzen.";
+        }
+
+        alert(errorMsg);
         document.getElementById('micModeSwitch').checked = false;
         toggleMicMode();
     }
@@ -789,6 +1032,50 @@ function generateReferenceTable() {
     }
 }
 
+function generateStats() {
+    // Update overall stats
+    document.getElementById('statTodayCorrect').textContent = userProgress.todayCorrect;
+    document.getElementById('statTodayTotal').textContent = userProgress.todayTotal;
+    document.getElementById('statTotalCorrect').textContent = userProgress.totalCorrect;
+    document.getElementById('statTotalQuestions').textContent = userProgress.totalQuestions;
+
+    const accuracy = userProgress.totalQuestions > 0
+        ? Math.round((userProgress.totalCorrect / userProgress.totalQuestions) * 100)
+        : 0;
+    document.getElementById('statAccuracy').textContent = accuracy + '%';
+
+    // Position stats
+    const container = document.getElementById('positionStatsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    for (let pos = 1; pos <= 7; pos++) {
+        const stats = userProgress.positionStats[pos];
+        const posAccuracy = stats.total > 0
+            ? Math.round((stats.correct / stats.total) * 100)
+            : 0;
+
+        const div = document.createElement('div');
+        div.className = 'd-flex justify-content-between align-items-center mb-1';
+
+        let badgeClass = 'bg-secondary';
+        if (posAccuracy >= 80) badgeClass = 'bg-success';
+        else if (posAccuracy >= 60) badgeClass = 'bg-warning';
+        else if (stats.total > 0) badgeClass = 'bg-danger';
+
+        div.innerHTML = `
+            <span>Position ${pos}:</span>
+            <span>
+                <span class="badge ${badgeClass}">${posAccuracy}%</span>
+                <span class="text-muted ms-1">(${stats.correct}/${stats.total})</span>
+            </span>
+        `;
+        container.appendChild(div);
+    }
+}
+
+
+
 function toggleDarkMode() {
     const html = document.documentElement;
     const btn = document.getElementById('darkModeToggleBtn');
@@ -809,6 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGamification();
     initQuiz();
     setLearnPosition(1);
+    initTheoryQuiz(); // Init Theorie Quiz
 
     // Init Dark Mode State
     // Default is dark in HTML, so set button accordingly

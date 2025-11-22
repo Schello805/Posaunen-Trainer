@@ -1,7 +1,7 @@
 {
   "name": "Posaunen Trainer",
   "short_name": "Posaune",
-  "start_url": "./Index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffc107",

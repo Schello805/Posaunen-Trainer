@@ -1,7 +1,7 @@
-const CACHE_NAME = 'posaune-trainer-v1';
+const CACHE_NAME = 'posaune-trainer-v2'; // Erhöhe Version bei Updates
 const ASSETS = [
     './',
-    './Index.html',
+    './index.html',
     './style.css',
     './script.js',
     './posaune.png',
@@ -14,38 +14,47 @@ const ASSETS = [
 
 // Install Event: Cache Files
 self.addEventListener('install', (event) => {
+    console.log('[SW] Installing new version...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[Service Worker] Caching all assets');
+                console.log('[SW] Caching all assets');
                 return cache.addAll(ASSETS);
             })
+            .then(() => self.skipWaiting()) // Activate immediately
     );
 });
 
-// Fetch Event: Serve from Cache
+// Fetch Event: Network First, then Cache (für Updates)
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request)
+        fetch(event.request)
             .then((response) => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
+                // Clone response to cache it
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
+                return response;
+            })
+            .catch(() => {
+                // Network failed, try cache
+                return caches.match(event.request);
             })
     );
 });
 
 // Activate Event: Clean up old caches
 self.addEventListener('activate', (event) => {
+    console.log('[SW] Activating new version...');
     event.waitUntil(
         caches.keys().then((keyList) => {
             return Promise.all(keyList.map((key) => {
                 if (key !== CACHE_NAME) {
+                    console.log('[SW] Removing old cache:', key);
                     return caches.delete(key);
                 }
             }));
-        })
+        }).then(() => self.clients.claim()) // Take control immediately
     );
 });
