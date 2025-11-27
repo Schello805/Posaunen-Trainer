@@ -8,6 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffc107">
     <link rel="apple-touch-icon" href="posaune.png">
+    <link rel="icon" type="image/png" href="posaune.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -21,7 +22,7 @@
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
@@ -91,59 +92,67 @@
                 <div class="tab-pane fade show active" id="pills-quiz">
                     <div class="card shadow border-0">
                         <div class="card-body text-center">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h3 class="mb-0">Finde die Position</h3>
-                                <button class="btn btn-sm btn-outline-secondary rounded-circle"
+                            <!-- Mobile Optimized Settings Header -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="mb-0 d-none d-md-block">Finde die Position</h3>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#quizSettings" aria-expanded="false">
+                                    <i class="bi bi-gear-fill"></i> Einstellungen
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle d-none d-md-inline-block"
                                     onclick="switchMainView('instructions')" title="Anleitung">
                                     <i class="bi bi-question-lg"></i>
                                 </button>
                             </div>
-                            <p class="text-muted mb-1" id="quizLevelHint">Modus: Anfänger</p>
 
-                            <!-- Schwierigkeits-Selector -->
-                            <div class="mb-3">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diffAuto"
-                                        checked autocomplete="off" onchange="setDifficultyOverride(0)">
-                                    <label class="btn btn-outline-primary" for="diffAuto">Auto (Lvl <span
-                                            id="autoLevelDisplay">1</span>)</label>
+                            <!-- Collapsible Settings -->
+                            <div class="collapse mb-3" id="quizSettings">
+                                <div class="card card-body p-2 bg-body-tertiary">
+                                    <p class="text-muted mb-1 small" id="quizLevelHint">Modus: Anfänger</p>
+                                    <!-- Schwierigkeits-Selector -->
+                                    <div class="mb-2">
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="difficultyOverride"
+                                                id="diffAuto" checked autocomplete="off"
+                                                onchange="setDifficultyOverride(0)">
+                                            <label class="btn btn-outline-primary" for="diffAuto">Auto (Lvl <span
+                                                    id="autoLevelDisplay">1</span>)</label>
 
-                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff1"
-                                        autocomplete="off" onchange="setDifficultyOverride(1)">
-                                    <label class="btn btn-outline-success" for="diff1">Anfänger</label>
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff1"
+                                                autocomplete="off" onchange="setDifficultyOverride(1)">
+                                            <label class="btn btn-outline-success" for="diff1">Lvl 1</label>
 
-                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff2"
-                                        autocomplete="off" onchange="setDifficultyOverride(2)">
-                                    <label class="btn btn-outline-warning" for="diff2">Fortgeschritten</label>
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff2"
+                                                autocomplete="off" onchange="setDifficultyOverride(2)">
+                                            <label class="btn btn-outline-warning" for="diff2">Lvl 2</label>
 
-                                    <input type="radio" class="btn-check" name="difficultyOverride" id="diff3"
-                                        autocomplete="off" onchange="setDifficultyOverride(3)">
-                                    <label class="btn btn-outline-danger" for="diff3">Profi</label>
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff3"
+                                                autocomplete="off" onchange="setDifficultyOverride(3)">
+                                            <label class="btn btn-outline-danger" for="diff3">Profi</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="micModeSwitch"
+                                                onchange="toggleMicMode()">
+                                            <label class="form-check-label small fw-bold" for="micModeSwitch">
+                                                <i class="bi bi-mic-fill"></i> Mikrofon (Beta)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-muted small fst-italic mt-1">Wähle die Schwierigkeit oder nutze "Auto"
-                                    für automatischen Fortschritt</div>
-                            </div>
-
-                            <div class="d-flex justify-content-center align-items-center mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="micModeSwitch"
-                                        onchange="toggleMicMode()">
-                                    <label class="form-check-label fw-bold" for="micModeSwitch">
-                                        <i class="bi bi-mic-fill"></i> Mit echter Posaune spielen (Beta)
-                                    </label>
-                                </div>
-                                <div class="text-muted small fst-italic">Aktiviere dein Mikrofon, um echte Töne zu
-                                    erkennen</div>
                             </div>
 
                             <div class="staff-container" id="quizStaff"></div>
 
                             <div class="note-name-hint" id="quizCurrentSelection">Aktuelle Auswahl: 1</div>
 
-                            <!-- HINT BUTTON -->
+                            <!-- HINT BUTTON COMPACT -->
                             <div class="mb-2">
-                                <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="playQuizHint()">
-                                    <i class="bi bi-ear"></i> Ton anhören (Hilfe)
+                                <button class="btn btn-sm btn-outline-warning rounded-pill py-0"
+                                    onclick="playQuizHint()">
+                                    <i class="bi bi-ear"></i> Ton anhören
                                 </button>
                             </div>
 
@@ -232,11 +241,11 @@
                                 <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(7)">7</button>
                             </div>
 
-                            <div class="d-grid gap-2 col-6 mx-auto mt-2">
-                                <button class="btn btn-lg btn-success shadow" id="checkAnswerBtn"
+                            <div class="d-grid gap-2 col-12 col-md-6 mx-auto mt-2 sticky-action-btn">
+                                <button class="btn btn-lg btn-success shadow py-3 fw-bold" id="checkAnswerBtn"
                                     onclick="checkQuizAnswer()">Antwort prüfen</button>
-                                <button class="btn btn-lg btn-primary shadow" id="nextBtn" style="display:none;"
-                                    onclick="nextQuestion()">Nächste Note</button>
+                                <button class="btn btn-lg btn-primary shadow py-3 fw-bold" id="nextBtn"
+                                    style="display:none;" onclick="nextQuestion()">Nächste Note</button>
                             </div>
                         </div>
                     </div>
@@ -528,7 +537,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=3"></script>
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {

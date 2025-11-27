@@ -449,20 +449,63 @@ function renderVexFlowNotes(id, keys, isGhost = false) {
     if (isGhost) div.classList.add('grayscale-staff'); else div.classList.remove('grayscale-staff');
     const r = new Renderer(div, Renderer.Backends.SVG); r.resize(350, 150);
     const ctx = r.getContext(); ctx.scale(1.5, 1.5);
-    const s = new Stave(10, 10, 210); s.addClef("bass"); s.setContext(ctx).draw();
+
+    // Dynamic Centering
+    const staveWidth = 210;
+    const effectiveWidth = 350 / 1.5; // ~233.33
+    const staveX = (effectiveWidth - staveWidth) / 2; // ~11.66
+
+    const s = new Stave(staveX, 10, staveWidth); s.addClef("bass"); s.setContext(ctx).draw();
     const n = new StaveNote({ keys: keys, duration: "w", clef: "bass", align_center: true });
     if (isGhost) n.setStyle({ fillStyle: "#999", strokeStyle: "#999" });
     keys.forEach((k, i) => {
         const notePart = k.split('/')[0].trim();
         const acc = notePart.substring(1); // Everything after the letter (e.g. 'b', 'bb', '#')
 
-        if (acc === 'b' || acc === 'bb') n.addModifier(new Accidental('b'), i);
-        if (acc === '#') n.addModifier(new Accidental('#'), i);
+        if (acc === 'b') addModifierToNote(n, new Vex.Flow.Accidental('b'), i);
+        if (acc === 'bb') addModifierToNote(n, new Vex.Flow.Accidental('bb'), i);
+        if (acc === '#') addModifierToNote(n, new Vex.Flow.Accidental('#'), i);
     });
     const v = new Voice({ num_beats: 4, beat_value: 4 }); v.addTickables([n]);
     new Formatter().joinVoices([v]).format([v], 150); v.draw(ctx, s);
-    div.querySelector('svg').setAttribute('viewBox', '0 0 350 150');
-    div.querySelector('svg').style.width = "100%"; div.querySelector('svg').style.height = "100%";
+
+    const svg = div.querySelector('svg');
+    if (svg) {
+        svg.setAttribute('viewBox', '0 0 350 150');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+    }
+}
+
+function addModifierToNote(note, modifier, index) {
+    // Robust check for VexFlow version signature differences
+    // VexFlow 4.x: addModifier(modifier, index)
+    // VexFlow 3.x: addModifier(index, modifier)
+
+    // Check if the 'modifier' object looks like a VexFlow Modifier (has getCategory or is instance)
+    // We can try to detect which signature the method expects, but easier to check the object.
+
+    // If we are in a version where the first argument should be the index (number),
+    // but we passed an object, we need to swap.
+
+    // However, we can't easily inspect the method.
+    // Let's try to detect the version more reliably or just try/catch.
+
+    // Better approach: Check if VexFlow 3.x is active.
+    // The user reported "e.setNote is not a function" which happens when 3.x receives (modifier, index).
+    // So we should default to (index, modifier) if we are unsure, OR try to detect.
+
+    // Let's try to use the 3.x signature if the version string starts with 3, 
+    // OR if it's undefined (often the case in minified 3.x).
+    const version = Vex.Flow.VERSION;
+
+    if (version && version.startsWith("4.")) {
+        note.addModifier(modifier, index);
+    } else {
+        // Fallback for 3.x (or undefined version)
+        note.addModifier(index, modifier);
+    }
 }
 
 function handleQuizInput(val) {
@@ -579,9 +622,20 @@ function renderEmptyStave(id) {
     const div = document.getElementById(id); if (!div) return; div.innerHTML = "";
     const r = new Renderer(div, Renderer.Backends.SVG); r.resize(350, 150);
     const ctx = r.getContext(); ctx.scale(1.5, 1.5);
-    const s = new Stave(10, 10, 210); s.addClef("bass"); s.setContext(ctx).draw();
-    div.querySelector('svg').setAttribute('viewBox', '0 0 350 150');
-    div.querySelector('svg').style.width = "100%"; div.querySelector('svg').style.height = "100%";
+
+    // Dynamic Centering
+    const staveWidth = 210;
+    const effectiveWidth = 350 / 1.5;
+    const staveX = (effectiveWidth - staveWidth) / 2;
+
+    const s = new Stave(staveX, 10, staveWidth); s.addClef("bass"); s.setContext(ctx).draw();
+    const svg = div.querySelector('svg');
+    if (svg) {
+        svg.setAttribute('viewBox', '0 0 350 150');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+    }
 }
 
 function handleLearnRelease(val) {
@@ -979,8 +1033,9 @@ function renderNoteThumbnail(container, noteKey) {
     const stave = new Stave(0, 0, 130);
     stave.setContext(ctx).draw();
     const note = new StaveNote({ keys: [noteKey], duration: "w", clef: "bass", align_center: true });
-    if (noteKey.includes('b')) note.addModifier(new Accidental('b'), 0);
-    if (noteKey.includes('#')) note.addModifier(new Accidental('#'), 0);
+    if (noteKey.includes('bb')) addModifierToNote(note, new Vex.Flow.Accidental('bb'), 0);
+    else if (noteKey.includes('b')) addModifierToNote(note, new Vex.Flow.Accidental('b'), 0);
+    if (noteKey.includes('#')) addModifierToNote(note, new Vex.Flow.Accidental('#'), 0);
     const voice = new Voice({ num_beats: 4, beat_value: 4 });
     voice.addTickables([note]);
     new Formatter().joinVoices([voice]).format([voice], 100);
