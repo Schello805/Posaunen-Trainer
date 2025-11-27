@@ -453,9 +453,11 @@ function renderVexFlowNotes(id, keys, isGhost = false) {
     const n = new StaveNote({ keys: keys, duration: "w", clef: "bass", align_center: true });
     if (isGhost) n.setStyle({ fillStyle: "#999", strokeStyle: "#999" });
     keys.forEach((k, i) => {
-        const notePart = k.split('/')[0];
-        if (notePart.length > 1 && notePart.includes('b')) n.addModifier(new Accidental('b'), i);
-        if (k.includes('#')) n.addModifier(new Accidental('#'), i);
+        const notePart = k.split('/')[0].trim();
+        const acc = notePart.substring(1); // Everything after the letter (e.g. 'b', 'bb', '#')
+
+        if (acc === 'b' || acc === 'bb') n.addModifier(new Accidental('b'), i);
+        if (acc === '#') n.addModifier(new Accidental('#'), i);
     });
     const v = new Voice({ num_beats: 4, beat_value: 4 }); v.addTickables([n]);
     new Formatter().joinVoices([v]).format([v], 150); v.draw(ctx, s);
