@@ -228,13 +228,11 @@ const positionMap = {
     5: [
         { text: "Ges", key: "gb/2", level: 2, freq: 92.50 },
         { text: "Des", key: "db/3", level: 2, freq: 138.59 },
-        { text: "ges", key: "gb/3", level: 2, freq: 185.00 },
-        { text: "b", key: "bb/3", level: 3, freq: 233.08 }
+        { text: "ges", key: "gb/3", level: 2, freq: 185.00 }
     ],
     6: [
         { text: "F (tief)", key: "f/2", level: 2, freq: 87.31 },
-        { text: "C", key: "c/3", level: 1, isBeginner: true, freq: 130.81 },
-        { text: "f", key: "f/3", level: 3, freq: 174.61 }
+        { text: "C", key: "c/3", level: 1, isBeginner: true, freq: 130.81 }
     ],
     7: [
         { text: "E (tief)", key: "e/2", level: 2, freq: 82.41 },
@@ -454,7 +452,11 @@ function renderVexFlowNotes(id, keys, isGhost = false) {
     const s = new Stave(10, 10, 210); s.addClef("bass"); s.setContext(ctx).draw();
     const n = new StaveNote({ keys: keys, duration: "w", clef: "bass", align_center: true });
     if (isGhost) n.setStyle({ fillStyle: "#999", strokeStyle: "#999" });
-    keys.forEach((k, i) => { if (k.includes('b')) n.addModifier(new Accidental('b'), i); if (k.includes('#')) n.addModifier(new Accidental('#'), i); });
+    keys.forEach((k, i) => {
+        const notePart = k.split('/')[0];
+        if (notePart.length > 1 && notePart.includes('b')) n.addModifier(new Accidental('b'), i);
+        if (k.includes('#')) n.addModifier(new Accidental('#'), i);
+    });
     const v = new Voice({ num_beats: 4, beat_value: 4 }); v.addTickables([n]);
     new Formatter().joinVoices([v]).format([v], 150); v.draw(ctx, s);
     div.querySelector('svg').setAttribute('viewBox', '0 0 350 150');
@@ -547,7 +549,12 @@ function handleLearnInput(val) {
             const btn = document.createElement('div');
             btn.className = `note-chip ${isFallback ? 'fallback-note' : ''} ${index === 0 ? 'active-note' : ''}`; // Default active first
             btn.innerHTML = `${n.text} <i class="bi bi-volume-up-fill small"></i>`;
-            btn.onclick = () => playSingleNote(n);
+            btn.onclick = () => {
+                // Update Active State
+                document.querySelectorAll('.note-chip').forEach(b => b.classList.remove('active-note'));
+                btn.classList.add('active-note');
+                playSingleNote(n);
+            };
             container.appendChild(btn);
         });
 
