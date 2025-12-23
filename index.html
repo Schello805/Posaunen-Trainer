@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Security: CSP -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com; worker-src 'self' blob:;">
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffc107">
+    <link rel="apple-touch-icon" href="posaune.png">
+    <link rel="icon" type="image/png" href="posaune.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Blechblastrainer - Posaune & Trompete lernen</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- VexFlow -->
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.3/build/cjs/vexflow.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- ml5.js for AI Pitch Detection (Pinned to 0.12.2 for compatibility) -->
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+
+    <link rel="stylesheet" href="style.css?v=4">
+</head>
+
+<body>
+    <!-- Visual Error Logger for debugging on mobile/production without console -->
+    <div id="error-console"
+        style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; background:rgba(255,0,0,0.9); color:white; padding:10px; font-family:monospace; font-size:12px; max-height:200px; overflow:auto;">
+        <div style="display:flex; justify-content:space-between;">
+            <strong>ERROR LOG:</strong>
+            <button onclick="document.getElementById('error-console').style.display='none'"
+                style="border:1px solid white; background:transparent; color:white;">X</button>
+        </div>
+        <div id="error-content"></div>
+    </div>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            const div = document.getElementById('error-console');
+            const content = document.getElementById('error-content');
+            div.style.display = 'block';
+            content.innerHTML += `<div>[${new Date().toLocaleTimeString()}] Error: ${msg} <br><small>${url}:${line}:${col}</small></div>`;
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            const div = document.getElementById('error-console');
+            const content = document.getElementById('error-content');
+            div.style.display = 'block';
+            content.innerHTML += `<div>[${new Date().toLocaleTimeString()}] Promise Rejection: ${event.reason}</div>`;
+        });
+    </script>
+
+    <!-- Compact Header / Stats Bar -->
+    <div class="container-fluid bg-body-tertiary border-bottom py-2 sticky-top shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <a href="javascript:void(0)" onclick="switchMainView('trainer')" class="text-decoration-none">
+                    <div class="fw-bold text-warning d-flex align-items-center gap-2">
+                        <img src="posaune.png" alt="Logo" height="32" class="d-inline-block align-text-top">
+                        <span class="navbar-brand-text">Blechblastrainer</span>
+                    </div>
+                </a>
+
+                <!-- Level Badge -->
+                <div class="badge bg-primary rounded-pill p-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i>
+                    <span>Lvl <span id="displayLevel">1</span></span>
+                </div>
+
+                <!-- Level Requirements Display -->
+                <div id="levelRequirementsContainer"
+                    class="d-none d-md-flex align-items-center ms-2 small fw-bold text-warning"></div>
+            </div>
+
+            <!-- XP Bar & Streak -->
+            <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+                <div class="d-none d-md-block w-25">
+                    <div class="progress" role="progressbar" style="height: 10px;">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                            id="xpProgressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="text-end text-muted" style="font-size: 0.7rem;">XP bis Level Up</div>
+                </div>
+
+                <div class="text-center">
+                    <div class="d-flex align-items-center gap-1 text-danger fw-bold">
+                        <i class="bi bi-fire"></i> <span id="displayStreak">0</span>
+                    </div>
+                    <div class="text-muted" style="font-size: 0.65rem;">Tage in Folge</div>
+                </div>
+
+                <!-- Dark Mode Toggle Mini -->
+                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" id="darkModeToggleBtn"
+                    onclick="toggleDarkMode()" title="Dunkelmodus umschalten">
+                    <i class="bi bi-moon-stars-fill"></i>
+                </button>
+
+                <!-- Help Button (Moved to Header) -->
+                <button class="btn btn-sm btn-outline-info rounded-circle ms-1"
+                    onclick="switchMainView('instructions')" title="Anleitung & Hilfe">
+                    <i class="bi bi-question-lg"></i>
+                </button>
+
+                <!-- Change Instrument Button -->
+                <button class="btn btn-sm btn-outline-warning rounded-circle ms-1"
+                    onclick="resetToStartScreen()" title="Instrument wechseln">
+                    <i class="bi bi-music-note-list"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-3">
+        <!-- START SCREEN -->
+        <div id="view-start" class="view-section text-center py-5">
+            <h1 class="display-4 fw-bold mb-4">Wähle dein Instrument</h1>
+            <p class="lead mb-5">Welches Instrument möchtest du heute üben?</p>
+            
+            <div class="row justify-content-center g-4">
+                <div class="col-md-5 col-lg-4">
+                    <div class="card h-100 shadow-sm hover-scale border-warning" style="cursor: pointer;" onclick="selectInstrument('trombone')">
+                        <div class="card-body py-5">
+                            <i class="bi bi-music-note-list display-1 text-warning mb-3"></i>
+                            <h2 class="card-title">Posaune</h2>
+                            <p class="text-muted">Bassschlüssel (C)<br>Zug-Positionen 1-7</p>
+                            <button class="btn btn-warning btn-lg rounded-pill px-4 mt-3">Starten</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-5 col-lg-4">
+                    <div class="card h-100 shadow-sm hover-scale border-info" style="cursor: pointer;" onclick="selectInstrument('trumpet')">
+                        <div class="card-body py-5">
+                            <i class="bi bi-music-note display-1 text-info mb-3"></i>
+                            <h2 class="card-title">Trompete</h2>
+                            <p class="text-muted">Violinschlüssel (B)<br>Ventile 1-3</p>
+                            <button class="btn btn-info text-white btn-lg rounded-pill px-4 mt-3">Starten</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-trainer" class="view-section d-none">
+            <!-- Tabs -->
+            <ul class="nav nav-pills nav-fill mb-3 gap-2 p-1 bg-body-tertiary rounded-pill shadow-sm" id="pills-tab">
+                <li class="nav-item"><button class="nav-link active rounded-pill py-1" id="pills-quiz-tab"
+                        data-bs-toggle="pill" data-bs-target="#pills-quiz"><i class="bi bi-controller"></i>
+                        Quiz</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill py-1" id="pills-learn-tab"
+                        data-bs-toggle="pill" data-bs-target="#pills-learn"><i class="bi bi-book"></i> Erkunden</button>
+                </li>
+                <li class="nav-item"><button class="nav-link rounded-pill py-1" id="pills-theory-tab"
+                        data-bs-toggle="pill" data-bs-target="#pills-theory"><i class="bi bi-lightbulb"></i>
+                        Theorie</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="pills-tabContent">
+                <!-- QUIZ -->
+                <div class="tab-pane fade show active" id="pills-quiz">
+                    <div class="card shadow border-0">
+                        <div class="card-body text-center">
+                            <!-- Mobile Optimized Settings Header -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="mb-0 d-none d-md-block">Finde die Position</h3>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#quizSettings" aria-expanded="false">
+                                    <i class="bi bi-gear-fill"></i> Einstellungen
+                                </button>
+                            </div>
+
+
+                            <!-- Level 1 Goals Text (Desktop) -->
+                            <!-- Level 1 Goals Text (Desktop) -->
+                            <div id="level1GoalCard" class="alert alert-warning py-3 mb-3 d-none d-md-block shadow-sm">
+                                <div class="text-center mb-2">
+                                    <strong class="fs-5"><i class="bi bi-flag-fill text-danger me-2"></i>Aufgaben für
+                                        Level 2</strong>
+                                </div>
+                                <div class="d-flex justify-content-center gap-4">
+                                    <div class="bg-white bg-opacity-50 px-3 py-1 rounded shadow-sm">
+                                        <span id="goalQuizDisplay" class="fw-bold"><i class="bi bi-controller"></i>
+                                            Quiz: 0/20</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-50 px-3 py-1 rounded shadow-sm">
+                                        <span id="goalTheoryDisplay" class="fw-bold"><i class="bi bi-lightbulb"></i>
+                                            Theorie: 0/10</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quiz Progress Bar (Mobile/General) -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1 small">
+                                    <span class="fw-bold text-muted" id="quizProgressTitle">Heute Richtig</span>
+                                    <span class="badge bg-secondary" id="quizProgressBadge">0</span>
+                                </div>
+                                <div class="progress" role="progressbar" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" id="quizProgressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+
+                            <!-- Collapsible Settings -->
+                            <div class="collapse mb-3" id="quizSettings">
+                                <div class="card card-body p-2 bg-body-tertiary">
+                                    <p class="text-muted mb-1 small" id="quizLevelHint">Modus: Anfänger</p>
+                                    <!-- Schwierigkeits-Selector -->
+                                    <div class="mb-2">
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="difficultyOverride"
+                                                id="diffAuto" checked autocomplete="off"
+                                                onchange="setDifficultyOverride(0)">
+                                            <label class="btn btn-outline-primary" for="diffAuto">Auto (Lvl <span
+                                                    id="autoLevelDisplay">1</span>)</label>
+
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff1"
+                                                autocomplete="off" onchange="setDifficultyOverride(1)">
+                                            <label class="btn btn-outline-success" for="diff1">Lvl 1</label>
+
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff2"
+                                                autocomplete="off" onchange="setDifficultyOverride(2)">
+                                            <label class="btn btn-outline-warning" for="diff2">Lvl 2</label>
+
+                                            <input type="radio" class="btn-check" name="difficultyOverride" id="diff3"
+                                                autocomplete="off" onchange="setDifficultyOverride(3)">
+                                            <label class="btn btn-outline-danger" for="diff3">Profi</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="micModeSwitch"
+                                                onchange="toggleMicMode()">
+                                            <label class="form-check-label small fw-bold" for="micModeSwitch">
+                                                <i class="bi bi-mic-fill"></i> Mikrofon (Beta)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="staff-container" id="quizStaff"></div>
+
+                            <div class="note-name-hint" id="quizCurrentSelection">Aktuelle Auswahl: 1</div>
+
+                            <!-- HINT BUTTON COMPACT -->
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-warning rounded-pill py-0"
+                                    onclick="playQuizHint()">
+                                    <i class="bi bi-ear"></i> Ton anhören
+                                </button>
+                            </div>
+
+                            <div id="quizNotesOnPosition" class="text-muted mb-2 fw-bold small"
+                                style="min-height: 1.5em;">
+                            </div>
+                            <div class="feedback-container">
+                                <div id="quizFeedback" class="feedback-badge bg-success text-white"></div>
+                            </div>
+
+                            <!-- DUAL VIEW: SLIDER vs TUNER -->
+                            <div id="interface-wrapper" class="mt-2">
+
+                                <!-- 1. TROMBONE SLIDER VIEW -->
+                                <div id="trombone-interface" class="trombone-visualizer-container">
+                                    <div class="viz-wrapper">
+                                        <input type="range" id="quizSlideRange" min="1" max="7" step="0.05" value="1"
+                                            oninput="handleQuizInput(this.value)" onchange="snapQuizInput(this.value)">
+
+                                        <div class="trombone-visualizer">
+                                            <div class="fixed-tubing"></div>
+                                            <div class="inner-slide-track"></div>
+                                            <div class="outer-slide" id="quizVisualSlide">
+                                                <div class="slide-handle">
+                                                    <div class="slide-handle-icon"><i
+                                                            class="bi bi-arrow-left-right"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Marker -->
+                                            <div class="pos-marker" id="quiz-marker-1" onclick="snapQuizInput(1)"
+                                                style="left: calc(95px + 0px);"><span>1</span></div>
+                                            <div class="pos-marker" id="quiz-marker-2" onclick="snapQuizInput(2)"
+                                                style="left: calc(95px + 40px);"><span>2</span></div>
+                                            <div class="pos-marker" id="quiz-marker-3" onclick="snapQuizInput(3)"
+                                                style="left: calc(95px + 80px);"><span>3</span></div>
+                                            <div class="pos-marker" id="quiz-marker-4" onclick="snapQuizInput(4)"
+                                                style="left: calc(95px + 120px);"><span>4</span></div>
+                                            <div class="pos-marker" id="quiz-marker-5" onclick="snapQuizInput(5)"
+                                                style="left: calc(95px + 160px);"><span>5</span></div>
+                                            <div class="pos-marker" id="quiz-marker-6" onclick="snapQuizInput(6)"
+                                                style="left: calc(95px + 200px);"><span>6</span></div>
+                                            <div class="pos-marker" id="quiz-marker-7" onclick="snapQuizInput(7)"
+                                                style="left: calc(95px + 240px);"><span>7</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. TRUMPET VALVES VIEW -->
+                                <div id="trumpet-interface" class="d-none py-3">
+                                    <div class="trumpet-visualizer mx-auto" style="max-width: 300px;">
+                                        <!-- Valve 1 -->
+                                        <div class="valve-group" id="valve-1" onclick="toggleValve(1, 'quiz')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">1</div>
+                                        </div>
+                                        <!-- Valve 2 -->
+                                        <div class="valve-group" id="valve-2" onclick="toggleValve(2, 'quiz')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">2</div>
+                                        </div>
+                                        <!-- Valve 3 -->
+                                        <div class="valve-group" id="valve-3" onclick="toggleValve(3, 'quiz')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">3</div>
+                                        </div>
+                                    </div>
+                                    <!-- Fake Slider for logic compatibility (hidden) -->
+                                    <!-- Actually we reuse the one from trombone interface if possible, or we need to ensure JS finds it. 
+                                         The ID 'quizSlideRange' is unique. If I hide trombone-interface, the input inside it is hidden but still exists in DOM.
+                                         So JS can still control it. -->
+                                </div>
+
+                                <!-- 3. TUNER INTERFACE (Hidden by default) -->
+                                <div id="tuner-interface" class="d-none text-center py-3">
+                                    <div class="tuner-display mb-3">
+                                        <div class="note-display display-1 fw-bold" id="detectedNote">--</div>
+                                        <div class="freq-display text-muted small" id="detectedFreq">0 Hz</div>
+                                    </div>
+
+                                    <div class="tuner-gauge-wrapper">
+                                        <div class="tuner-gauge">
+                                            <div class="gauge-center-line"></div>
+                                            <div class="gauge-needle" id="tunerNeedle"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between px-2 text-muted small mt-1">
+                                            <span>b (Zu tief)</span>
+                                            <span class="text-success fw-bold">Perfekt</span>
+                                            <span># (Zu hoch)</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <div class="alert alert-info py-2 small d-inline-block">
+                                            <i class="bi bi-info-circle"></i> Spiele den Ton lang und gleichmäßig.
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- BUTTONS -->
+                            <div class="mobile-controls-container mb-4">
+                                <button class="btn btn-outline-secondary pos-btn active-pos"
+                                    onclick="snapQuizInput(1)">1</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(2)">2</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(3)">3</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(4)">4</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(5)">5</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(6)">6</button>
+                                <button class="btn btn-outline-secondary pos-btn" onclick="snapQuizInput(7)">7</button>
+                            </div>
+
+                            <div class="d-grid gap-2 col-12 col-md-6 mx-auto mt-2">
+                                <button class="btn btn-lg btn-success shadow py-3 fw-bold" id="checkAnswerBtn"
+                                    onclick="checkQuizAnswer()">Antwort prüfen</button>
+                                <button class="btn btn-lg btn-primary shadow py-3 fw-bold" id="nextBtn"
+                                    style="display:none;" onclick="nextQuestion()">Nächste Note</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LEARN -->
+                <div class="tab-pane fade" id="pills-learn">
+                    <div class="card shadow border-0">
+                        <div class="card-body text-center">
+                            <h2 class="card-title mb-3">Erkunden</h2>
+                            <div class="staff-container" id="learnStaff"></div>
+
+                            <!-- Interaktive Noten-Buttons -->
+                            <div id="learnNoteInteraction"
+                                class="my-3 d-flex justify-content-center flex-wrap gap-2 align-items-center"
+                                style="min-height: 50px;">
+                                <div class="text-muted fst-italic small d-none d-md-block">Bewege den Zug, um Töne zu
+                                    sehen</div>
+                                <div class="text-muted fst-italic small d-md-none">Tippe unten auf eine Zahl (1-7), um
+                                    Töne zu sehen</div>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-3 mb-3 align-items-center">
+                                <div class="form-check form-switch small">
+                                    <input class="form-check-input" type="checkbox" id="autoPlayCheck" checked>
+                                    <label class="form-check-label text-muted" for="autoPlayCheck">Auto-Play
+                                        (Grundton)</label>
+                                </div>
+                            </div>
+
+                            <div id="learn-interface-wrapper">
+                                <!-- LEARN TROMBONE INTERFACE -->
+                                <div id="learn-trombone-interface" class="trombone-visualizer-container">
+                                    <div class="viz-wrapper">
+                                        <input type="range" id="learnSlideRange" min="1" max="7" step="0.05" value="1"
+                                            oninput="handleLearnInput(this.value)"
+                                            onchange="handleLearnRelease(this.value)">
+                                        <div class="trombone-visualizer">
+                                            <div class="fixed-tubing"></div>
+                                            <div class="inner-slide-track"></div>
+                                            <div class="outer-slide" id="learnVisualSlide">
+                                                <div class="slide-handle">
+                                                    <div class="slide-handle-icon"><i class="bi bi-arrow-left-right"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="pos-marker" id="learn-marker-1" onclick="handleLearnRelease(1)"
+                                                style="left: calc(95px + 0px);"><span>1</span></div>
+                                            <div class="pos-marker" id="learn-marker-2" onclick="handleLearnRelease(2)"
+                                                style="left: calc(95px + 40px);"><span>2</span></div>
+                                            <div class="pos-marker" id="learn-marker-3" onclick="handleLearnRelease(3)"
+                                                style="left: calc(95px + 80px);"><span>3</span></div>
+                                            <div class="pos-marker" id="learn-marker-4" onclick="handleLearnRelease(4)"
+                                                style="left: calc(95px + 120px);"><span>4</span></div>
+                                            <div class="pos-marker" id="learn-marker-5" onclick="handleLearnRelease(5)"
+                                                style="left: calc(95px + 160px);"><span>5</span></div>
+                                            <div class="pos-marker" id="learn-marker-6" onclick="handleLearnRelease(6)"
+                                                style="left: calc(95px + 200px);"><span>6</span></div>
+                                            <div class="pos-marker" id="learn-marker-7" onclick="handleLearnRelease(7)"
+                                                style="left: calc(95px + 240px);"><span>7</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- LEARN TRUMPET INTERFACE -->
+                                <div id="learn-trumpet-interface" class="d-none py-3">
+                                    <div class="trumpet-visualizer mx-auto" style="max-width: 300px;">
+                                        <!-- Valve 1 -->
+                                        <div class="valve-group" id="learn-valve-1" onclick="toggleValve(1, 'learn')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">1</div>
+                                        </div>
+                                        <!-- Valve 2 -->
+                                        <div class="valve-group" id="learn-valve-2" onclick="toggleValve(2, 'learn')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">2</div>
+                                        </div>
+                                        <!-- Valve 3 -->
+                                        <div class="valve-group" id="learn-valve-3" onclick="toggleValve(3, 'learn')">
+                                            <div class="valve-piston"></div>
+                                            <div class="valve-stem"></div>
+                                            <div class="valve-casing"></div>
+                                            <div class="valve-label">3</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mobile-controls-container">
+                                <button class="btn btn-outline-secondary pos-btn active-pos"
+                                    onclick="setLearnPosition(1)">1</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(2)">2</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(3)">3</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(4)">4</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(5)">5</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(6)">6</button>
+                                <button class="btn btn-outline-secondary pos-btn"
+                                    onclick="setLearnPosition(7)">7</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- THEORIE -->
+                <div class="tab-pane fade" id="pills-theory">
+                    <div class="card shadow border-0">
+                        <div class="card-body text-center">
+                            <h2 class="card-title mb-3"><i class="bi bi-lightbulb-fill text-warning"></i>
+                                Fachwissen</h2>
+                            <p class="text-muted small">Lerne die Grundlagen deines Instruments kennen</p>
+
+                            <!-- Flashcard Container -->
+                            <div class="flashcard-container my-4">
+                                <div class="flashcard" id="theoryCard">
+                                    <div class="card-number mb-2 text-muted small">Frage <span
+                                            id="theoryCardNum">1</span> von <span id="theoryCardTotal">-</span>
+                                    </div>
+                                    <h4 class="mb-4" id="theoryQuestion">Lade Fragen...</h4>
+
+                                    <!-- Options Container -->
+                                    <div id="theoryOptions" class="d-grid gap-2">
+                                        <!-- Buttons werden per JS eingefügt -->
+                                    </div>
+
+                                    <!-- Progress Bar Inside Card -->
+                                    <div class="mt-4 pt-3 border-top">
+                                        <div class="d-flex justify-content-between text-muted small mb-1">
+                                            <span>Fortschritt</span>
+                                            <span><span id="theoryCorrect" class="text-success fw-bold">0</span> / <span
+                                                    id="theoryWrong" class="text-danger fw-bold">0</span></span>
+                                        </div>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-success" id="theoryProgress" role="progressbar"
+                                                style="width: 0%; transition: width 0.5s ease;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reset Button -->
+                            <button class="btn btn-sm btn-outline-secondary" onclick="resetTheoryQuiz()">
+                                <i class="bi bi-arrow-clockwise"></i> Quiz neu starten
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-instructions" class="view-section d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0"><i class="bi bi-info-circle-fill text-warning"></i> Anleitung & Hilfe</h2>
+                    <button class="btn btn-outline-primary rounded-pill" onclick="switchMainView('trainer')">
+                        <i class="bi bi-arrow-left"></i> Zurück
+                    </button>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-music-note-beamed"></i> Willkommen beim Blechblastrainer!</h5>
+                        <p class="card-text">
+                            Diese WebApp hilft dir, die ersten Töne auf der <span id="helpInstName">Posaune oder Trompete</span> zu lernen und die richtigen
+                            <span id="helpInstPos">Griffe bzw. Zugpositionen</span> zu verinnerlichen.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-body-secondary">
+                        <h5 class="mb-0">Die drei Bereiche</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Quiz -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-success"><i class="bi bi-controller"></i> Quiz (Praxis)</h6>
+                                    <p class="small" id="helpQuizDesc">Trainiere das Treffen der richtigen Positionen.</p>
+                                    <ul class="small ps-3">
+                                        <li><strong>Schwierigkeit:</strong> Wähle manuell (Anfänger/Profi) oder lass
+                                            "Auto" mit deinem Level wachsen.</li>
+                                        <li><strong>Mikrofon (Beta):</strong> Spiele echte Töne auf deinem Instrument, um
+                                            zu antworten!</li>
+                                        <li><strong>Hilfe:</strong> Klicke auf "Ton anhören", wenn du unsicher bist.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Erkunden -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-primary"><i class="bi bi-book"></i> Erkunden</h6>
+                                    <p class="small">Experimentiere ohne Druck.</p>
+                                    <ul class="small ps-3">
+                                        <li id="helpExploreDesc">Bewege den Zug und sieh, welche Töne dort liegen.</li>
+                                        <li>Höre dir die Töne an.</li>
+                                        <li id="helpAutoPlayDesc">Nutze <strong>Auto-Play</strong>, um den Grundton beim Ziehen zu hören.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Theorie -->
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded h-100">
+                                    <h6 class="text-warning"><i class="bi bi-lightbulb"></i> Theorie</h6>
+                                    <p class="small">Teste dein Wissen über dein Instrument.</p>
+                                    <ul class="small ps-3">
+                                        <li>Multiple-Choice Fragen zu Aufbau, Geschichte und Musiktheorie.</li>
+                                        <li>4 Schwierigkeitsstufen (Leicht bis Experte).</li>
+                                        <li>Sammle extra XP für richtige Antworten!</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level System Info -->
+                        <div class="mt-4 p-3 border rounded bg-body-tertiary">
+                            <h6 class="text-info fw-bold"><i class="bi bi-trophy"></i> Level-System & Aufstieg</h6>
+                            <p class="small mb-2">Um ein echter Blechblas-Meister zu werden, musst du dich beweisen!</p>
+                            <ul class="small ps-3 mb-0">
+                                <li id="helpLevel1Req"><strong>Level 1 (Anfänger):</strong> Du musst <strong>20x</strong> im Quiz die
+                                    richtige Position treffen und <strong>10x</strong> eine Theorie-Frage richtig
+                                    beantworten, um aufzusteigen.</li>
+                                <li><strong>XP (Erfahrungspunkte):</strong> Sammle Punkte durch Üben. Wenn der Balken
+                                    voll ist UND du die Aufgaben erledigt hast, steigst du auf.</li>
+                                <li><strong>Höhere Level:</strong> Schalten neue Töne und schwierigere Fragen frei.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-body-secondary">
+                        <h5 class="mb-0">Steuerung</h5>
+                        <ul id="helpControlsList" class="small ps-3 mb-0">
+                            <li><strong>PC / Tablet:</strong> Ziehe den Slider am Griff oder klicke direkt auf die
+                                Zahlen im Bild.</li>
+                            <li><strong>Smartphone:</strong> Nutze die großen runden Buttons (1-7) unter der Grafik.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Zugtabelle -->
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-warning text-dark fw-bold">
+                        <i class="bi bi-grid-3x3"></i> <span id="helpTableTitle">Zugtabelle & Positionen</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0 align-middle text-center table-ref"
+                                id="referenceTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 10%" id="refTableHeadPos">Pos</th>
+                                        <th style="width: 30%">Anfänger (B-Dur)</th>
+                                        <th style="width: 30%">Fortgeschritten</th>
+                                        <th style="width: 30%">Profi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Wird per JS gefüllt -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiken -->
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-info text-white fw-bold">
+                        <i class="bi bi-graph-up"></i> Deine Statistiken
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Heute</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Richtig beantwortet:</span>
+                                    <span class="badge bg-success" id="statTodayCorrect">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span>Gesamt heute:</span>
+                                    <span class="badge bg-secondary" id="statTodayTotal">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Insgesamt</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Richtig:</span>
+                                    <span class="badge bg-success" id="statTotalCorrect">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span>Fragen:</span>
+                                    <span class="badge bg-secondary" id="statTotalQuestions">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">Genauigkeit: <span id="statAccuracy"
+                                            class="fw-bold">0%</span></small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6 class="text-muted small mb-2" id="statsPosTitle">Genauigkeit pro Position</h6>
+                        <div id="positionStatsContainer" class="small">
+                            <!-- Wird per JS gefüllt -->
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <button class="btn btn-outline-success" onclick="shareProgressReport()">
+                                <i class="bi bi-share-fill"></i> Fortschritt teilen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center"><button class="btn btn-primary btn-lg"
+                        onclick="switchMainView('trainer')">Zurück zum Trainer</button></div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-muted py-4 mt-5 border-top small">
+        <div class="container">
+            Erstellt von M. Schellenberger 11/2025 mit Gemini (<a href="https://Michael.schellenberger.biz"
+                target="_blank" rel="noopener noreferrer"
+                class="text-decoration-none text-muted">Michael.schellenberger.biz</a>) - Version 2.0
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered!', reg))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+        }
+    </script>
+</body>
+
+</html>

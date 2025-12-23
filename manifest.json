@@ -1,0 +1,16 @@
+{
+  "name": "Blechblastrainer",
+  "short_name": "Blechblas",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffc107",
+  "description": "Lerne Posaune & Trompete: Zugpositionen, Griffe und Noten spielerisch.",
+  "icons": [
+    {
+      "src": "posaune.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
