@@ -26,29 +26,29 @@ import { appState } from './state.js';
 function selectInstrument(inst) {
     console.log(`selectInstrument called with: ${inst}`);
     appState.selectedInstrument = inst;
-    
+
     // Switch View
     document.getElementById('view-start').classList.add('d-none');
     document.getElementById('view-trainer').classList.remove('d-none');
-    
+
     // Toggle Instrument Interface (Quiz)
     const trmb = document.getElementById('trombone-interface');
     const trmp = document.getElementById('trumpet-interface');
-    
+
     // Toggle Instrument Interface (Learn)
     const learnTrmb = document.getElementById('learn-trombone-interface');
     const learnTrmp = document.getElementById('learn-trumpet-interface');
-    
+
     if (inst === 'trumpet') {
         if (trmb) trmb.classList.add('d-none');
         if (trmp) trmp.classList.remove('d-none');
-        
+
         if (learnTrmb) learnTrmb.classList.add('d-none');
         if (learnTrmp) learnTrmp.classList.remove('d-none');
     } else {
         if (trmb) trmb.classList.remove('d-none');
         if (trmp) trmp.classList.add('d-none');
-        
+
         if (learnTrmb) learnTrmb.classList.remove('d-none');
         if (learnTrmp) learnTrmp.classList.add('d-none');
     }
@@ -74,7 +74,7 @@ function resetToStartScreen() {
     if (i) i.classList.add('d-none');
     if (st) st.classList.add('d-none');
     if (s) s.classList.remove('d-none');
-    
+
     appState.selectedInstrument = null;
 
     // Hide Stats Button
@@ -92,13 +92,13 @@ function switchMainView(v) {
     // Hide all first (Safe check)
     if (t) t.classList.add('d-none');
     else console.warn("view-trainer not found");
-    
+
     if (i) i.classList.add('d-none');
     else console.warn("view-instructions not found");
-    
+
     if (s) s.classList.add('d-none');
     else console.warn("view-start not found");
-    
+
     if (st) st.classList.add('d-none');
     else console.warn("view-stats not found");
 
@@ -113,7 +113,7 @@ function switchMainView(v) {
 
         if (appState.currentQuizQuestion) {
             // Re-render notes with correct clef if coming back
-            const inst = appState.selectedInstrument === 'trumpet' ? 'treble' : 'bass'; 
+            const inst = appState.selectedInstrument === 'trumpet' ? 'treble' : 'bass';
             const slider = document.getElementById('quizSlideRange');
             if (slider) handleQuizInput(slider.value);
         }
@@ -165,7 +165,7 @@ function toggleMicMode() {
         // Hide both inputs
         if (trmb) trmb.classList.add('d-none');
         if (trmp) trmp.classList.add('d-none');
-        
+
         tunerUI.classList.remove('d-none');
         if (hintBtn) hintBtn.parentElement.classList.add('d-none');
         // Start Mic with Callback
@@ -173,11 +173,11 @@ function toggleMicMode() {
     } else {
         // Show correct input based on selected instrument
         if (appState.selectedInstrument === 'trumpet') {
-             if (trmp) trmp.classList.remove('d-none');
+            if (trmp) trmp.classList.remove('d-none');
         } else {
-             if (trmb) trmb.classList.remove('d-none');
+            if (trmb) trmb.classList.remove('d-none');
         }
-        
+
         tunerUI.classList.add('d-none');
         if (hintBtn) hintBtn.parentElement.classList.remove('d-none');
         stopMicrophone();
@@ -365,9 +365,9 @@ function setupEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App initializing...");
     setupEventListeners();
-    
+
     // Initial State
-    resetToStartScreen(); 
+    resetToStartScreen();
     initGamification();
     initQuiz();
     setLearnPosition(1);

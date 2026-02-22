@@ -1,4 +1,19 @@
+# OS specific files
 .DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node (if added later)
 node_modules/
-dist/
+npm-debug.log
+yarn-error.log
+
+# Local env
 .env

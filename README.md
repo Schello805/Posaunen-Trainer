@@ -1,11 +1,11 @@
-# 🎺 Blechblastrainer (Brass Trainer) v2.0
+# 🎺 Blechblastrainer (Brass Trainer) v2.2
 
 Ein interaktiver Web-Trainer für **Posaune und Trompete**, um Zugpositionen, Griffe, Notenlesen und Intonation zu üben.
 
 ![Blechblastrainer Screenshot](screenshot.png)
 *(Füge hier später einen Screenshot ein)*
 
-## ✨ Features (v2.0)
+## ✨ Features (v2.2)
 
 ### 🎷 Multi-Instrument Support
 *   **Posaune:** Trainiere die 7 Zugpositionen im Bassschlüssel.
