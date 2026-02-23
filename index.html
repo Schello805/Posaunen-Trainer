@@ -63,12 +63,12 @@
 
     <!-- Compact Header / Stats Bar -->
     <div class="container-fluid bg-body-tertiary border-bottom py-2 sticky-top shadow-sm">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
+        <div class="container d-flex justify-content-between align-items-center px-1 px-md-3">
+            <div class="d-flex align-items-center gap-2 gap-md-3">
                 <a href="javascript:void(0)" id="headerBrandLink" class="text-decoration-none">
                     <div class="fw-bold text-warning d-flex align-items-center gap-2">
                         <img src="posaune.png" alt="Logo" height="32" class="d-inline-block align-text-top">
-                        <span class="navbar-brand-text">Blechblastrainer</span>
+                        <span class="navbar-brand-text d-none d-md-inline">Blechblastrainer</span>
                     </div>
                 </a>
 
@@ -84,7 +84,7 @@
             </div>
 
             <!-- XP Bar & Streak -->
-            <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+            <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 justify-content-end">
                 <div class="d-none d-md-block w-25">
                     <div class="progress" role="progressbar" style="height: 10px;">
                         <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
@@ -93,11 +93,13 @@
                     <div class="text-end text-muted" style="font-size: 0.7rem;">XP bis Level Up</div>
                 </div>
 
-                <div class="text-center">
-                    <div class="d-flex align-items-center gap-1 text-danger fw-bold">
+                <div class="text-center mt-1">
+                    <div class="d-flex align-items-center gap-1 text-danger fw-bold justify-content-center">
                         <i class="bi bi-fire"></i> <span id="displayStreak">0</span>
                     </div>
-                    <div class="text-muted" style="font-size: 0.65rem;">Tage in Folge</div>
+                    <div class="text-muted d-none d-sm-block" style="font-size: 0.65rem; line-height: 1;">Tage in Folge
+                    </div>
+                    <div class="text-muted d-block d-sm-none" style="font-size: 0.55rem; line-height: 1;">Tage</div>
                 </div>
 
                 <!-- Dark Mode Toggle Mini -->
@@ -119,9 +121,9 @@
                 </button>
 
                 <!-- Change Instrument Button -->
-                <button class="btn btn-sm btn-outline-warning rounded-pill ms-1 fw-bold" id="btnHeaderInstrument"
-                    title="Instrument wechseln">
-                    Instrument wechseln
+                <button class="btn btn-sm btn-outline-warning rounded-pill ms-1 fw-bold d-none" id="btnHeaderInstrument"
+                    title="Instrument wechseln" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                    Wechseln<span class="d-none d-md-inline"> (Instrument)</span>
                 </button>
             </div>
         </div>

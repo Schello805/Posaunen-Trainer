@@ -62,6 +62,10 @@ function selectInstrument(inst) {
     // Show Stats Button
     const btnStats = document.getElementById('btnHeaderStats');
     if (btnStats) btnStats.classList.remove('d-none');
+
+    // Show Instrument Button
+    const btnInst = document.getElementById('btnHeaderInstrument');
+    if (btnInst) btnInst.classList.remove('d-none');
 }
 
 function resetToStartScreen() {
@@ -80,6 +84,10 @@ function resetToStartScreen() {
     // Hide Stats Button
     const btnStats = document.getElementById('btnHeaderStats');
     if (btnStats) btnStats.classList.add('d-none');
+
+    // Hide Instrument Button
+    const btnInst = document.getElementById('btnHeaderInstrument');
+    if (btnInst) btnInst.classList.add('d-none');
 }
 
 function switchMainView(v) {
