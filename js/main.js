@@ -62,10 +62,6 @@ function selectInstrument(inst) {
     // Show Stats Button
     const btnStats = document.getElementById('btnHeaderStats');
     if (btnStats) btnStats.classList.remove('d-none');
-
-    // Show Instrument Button
-    const btnInst = document.getElementById('btnHeaderInstrument');
-    if (btnInst) btnInst.classList.remove('d-none');
 }
 
 function resetToStartScreen() {
@@ -84,10 +80,6 @@ function resetToStartScreen() {
     // Hide Stats Button
     const btnStats = document.getElementById('btnHeaderStats');
     if (btnStats) btnStats.classList.add('d-none');
-
-    // Hide Instrument Button
-    const btnInst = document.getElementById('btnHeaderInstrument');
-    if (btnInst) btnInst.classList.add('d-none');
 }
 
 function switchMainView(v) {
@@ -227,7 +219,7 @@ function setupEventListeners() {
 
     // 1. Header & Navigation
     const headerBrand = document.getElementById('headerBrandLink');
-    if (headerBrand) headerBrand.addEventListener('click', () => switchMainView('trainer'));
+    if (headerBrand) headerBrand.addEventListener('click', resetToStartScreen);
 
     const btnDarkMode = document.getElementById('darkModeToggleBtn');
     if (btnDarkMode) btnDarkMode.addEventListener('click', toggleDarkMode);
@@ -248,9 +240,6 @@ function setupEventListeners() {
     } else {
         console.error("btnHeaderStats not found in DOM");
     }
-
-    const btnHeaderInstrument = document.getElementById('btnHeaderInstrument');
-    if (btnHeaderInstrument) btnHeaderInstrument.addEventListener('click', resetToStartScreen);
 
     const btnBackTrainer1 = document.getElementById('btnBackToTrainer1');
     if (btnBackTrainer1) btnBackTrainer1.addEventListener('click', () => switchMainView('trainer'));
